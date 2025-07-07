@@ -71,7 +71,7 @@ export default function App() {
       setMatchResult(null);
 
       const formData = new FormData();
-      
+
       formData.append("image1", imageOne, imageOne.name);
       formData.append("image2", imageTwo, imageTwo.name);
       formData.append("model", "VGG-Face");
@@ -91,7 +91,7 @@ export default function App() {
         if (result.success) {
           setMatchResult(result);
         } else {
-          alert('Face match failed or invalid response');
+          alert('Please upload valid images.Face match failed and has invalid response.');
         }
       } catch (e) {
         console.error('Failed to parse response JSON', text);
