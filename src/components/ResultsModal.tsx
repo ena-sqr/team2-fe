@@ -85,17 +85,6 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
             )}
           </div>
         </div>
-
-        {/* Similarity Score */}
-        <div className="text-center mb-1">
-          <div
-            className={`inline-flex items-center gap-2 text-lg font-semibold ${
-              matchResult.verified ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            Similarity: {matchResult.similarity_percentage.toFixed(2)}%
-          </div>
-        </div>
       </div>
     </div>
   );
