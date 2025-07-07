@@ -1,36 +1,30 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ResultsModal from './components/ResultsModal';
 import ImageUploaderInput from './components/ImageUploaderInput';
+import { getThresholdForModel, ModelsConfig, DistanceMetric} from "./utils/threshold";
+import { distanceMetricDescriptions } from "./utils/metrics";
 
-const models = [
-  "VGG-Face",
-  "Facenet",
-  "Facenet512",
-  "OpenFace",
-  "DeepFace",
-  "DeepID",
-  "ArcFace",
-  "Dlib",
-  "SFace",
-  "GhostFaceNet",
-  "Buffalo_L",
+const DEFAULT_MODEL = "VGG-Face";
+const DEFAULT_METRIC = "cosine";
+const DEFAULT_THRESHOLD = "0.68";
+
+const MODELS = [
+  "VGG-Face", "Facenet", "Facenet512", "OpenFace", "DeepFace",
+  "DeepID", "ArcFace", "Dlib", "SFace", "GhostFaceNet", "Buffalo_L",
 ];
 
-const METRICS = ["cosine", "euclidean", "euclidean_l2", "angular"];
+const METRICS = ["cosine", "euclidean", "euclidean_l2"];
 const API_URL = 'https://e569-2001-4455-803f-e800-a1cd-a510-6234-45db.ngrok-free.app';
-const THRESHOLD = '0.4';
 
 export default function App() {
   const [imageOne, setImageOne] = useState<File | null>(null);
   const [imageTwo, setImageTwo] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [model, setModel] = useState("VGG-Face");
-  const [metric, setMetric] = useState("cosine");
-
-  const IMAGES_INPUT = [
-    { label: "Image One", file: imageOne, setFile: setImageOne },
-    { label: "Image Two", file: imageTwo, setFile: setImageTwo },  
-  ];
+  const [model, setModel] = useState(DEFAULT_MODEL);
+  const [metric, setMetric] = useState(DEFAULT_METRIC as DistanceMetric);
+  const [threshold, setThreshold] = useState(DEFAULT_THRESHOLD);
+  const [modelDescription, setModelDescription] = useState('');
+  const [modelsConfig, setModelsConfig] = useState({} as ModelsConfig);
 
   const [matchResult, setMatchResult] = useState<{
     verified: boolean;
@@ -42,41 +36,60 @@ export default function App() {
     threshold: number;
   } | null>(null);
 
+  const IMAGES_INPUT = [
+    { label: "First Image", file: imageOne, setFile: setImageOne },
+    { label: "Second Image", file: imageTwo, setFile: setImageTwo },  
+  ];
+
+  useEffect(() => {
+    fetchModels();
+  }, []);
+
+  const fetchModels = async () => {
+    try {
+      setLoading(true);
+      setMatchResult(null);
+
+      const response = await fetch(`${API_URL}/models`);
+      const text = await response.text();
+      console.log('Get Models Response:', text);
+
+      const result = JSON.parse(text);
+      console.log('Parsed Models:', result);
+      setModelsConfig(result);
+
+      setModel(result.recommended_model);
+      setMetric(result.recommended_distance_metric as DistanceMetric);
+      setModelDescription(result.models[result.recommended_model]?.description ?? "");
+    } catch (err) {
+      console.error('Error fetching models:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!imageOne || !imageTwo) {
       alert("Please upload both images.");
       return;
     }
 
-    const formData = new FormData();
-    formData.append("image1", imageOne, imageOne.name);
-    formData.append("image2", imageTwo, imageOne.name);
-    formData.append("model", model);
-    formData.append("distance_metric", metric);
-    formData.append("threshold", THRESHOLD);
-    
-    //mock results
-    // setMatchResult({
-    //     "distance": 0.9603962434754376,
-    //     "distance_metric": "cosine",
-    //     "model": "VGG-Face",
-    //     "similarity_percentage": 100,
-    //     "success": true,
-    //     "threshold": 0.4,
-    //     "verified": true
-    // });
-    
+    const numericThreshold = parseFloat(threshold);
+    if (isNaN(numericThreshold)) {
+      alert("Please enter a valid numeric threshold.");
+      return;
+    }
+
     try {
       setLoading(true);
       setMatchResult(null);
 
       const formData = new FormData();
-
       formData.append("image1", imageOne, imageOne.name);
       formData.append("image2", imageTwo, imageTwo.name);
-      formData.append("model", "VGG-Face");
-      formData.append("distance_metric", "cosine");
-      formData.append("threshold", "0.4");
+      formData.append("model", model);
+      formData.append("distance_metric", metric);
+      formData.append("threshold", threshold);
 
       const response = await fetch(`${API_URL}/compare`, {
         method: 'POST',
@@ -86,24 +99,44 @@ export default function App() {
       const text = await response.text();
       console.log('Raw response:', text);
 
-      try {
-        const result = JSON.parse(text);
-        if (result.success) {
-          setMatchResult(result);
-        } else {
-          alert('Please upload valid images.Face match failed and has invalid response.');
-        }
-      } catch (e) {
-        console.error('Failed to parse response JSON', text);
-        alert('Invalid server response. Check if ngrok server is running.');
+      const result = JSON.parse(text);
+      if (result.success) {
+        setMatchResult(result);
+      } else {
+        alert('Face match failed. Please upload valid images.');
       }
     } catch (err) {
-      console.log('err', err);
+      console.error('Error during comparison:', err);
       alert("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   };
+
+
+  const handleModelChange = (value: string) => {
+    setModel(value);
+
+    // Use current selected metric
+    const thresholdValue = getThresholdForModel(modelsConfig, value, metric);
+
+    if (thresholdValue !== null) {
+      setThreshold(thresholdValue.toString());
+    }
+
+   setModelDescription(modelsConfig.models[value]?.description ?? "");
+  }
+
+  const handleMetricsChange = (value: DistanceMetric) => {
+    setMetric(value as DistanceMetric);
+
+    // Use current selected metric
+    const thresholdValue = getThresholdForModel(modelsConfig, model, value);
+
+    if (thresholdValue !== null) {
+      setThreshold(thresholdValue.toString());
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
@@ -119,15 +152,16 @@ export default function App() {
             </label>
             <select
               value={model}
-              onChange={(e) => setModel(e.target.value)}
+              onChange={(e) => { handleModelChange(e.target.value) }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
             >
-              {models.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
+              {MODELS.map((m) => (
+                <option key={m} value={m}>{m}</option>
               ))}
             </select>
+            <p className="mt-1 text-xs text-gray-500">
+              {modelDescription}
+            </p>
           </div>
 
           <div>
@@ -136,22 +170,41 @@ export default function App() {
             </label>
             <select
               value={metric}
-              onChange={(e) => setMetric(e.target.value)}
+              onChange={(e) => {
+                handleMetricsChange(e.target.value as DistanceMetric);
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
             >
               {METRICS.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
+                <option key={m} value={m}>{m}</option>
               ))}
             </select>
+            <p className="text-xs text-gray-500 mt-1">
+              {distanceMetricDescriptions[metric]}
+            </p>
+          </div>
+
+          <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">
+              Threshold
+            </label>
+            <input
+              type="number"
+              min={0}
+              max={1}
+              step={0.01}
+              value={threshold}
+              onChange={(e) => setThreshold(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Maximum distance allowed between faces to consider them a match. Lower values mean stricter matching.
+            </p>
           </div>
         </div>
 
-        {/* Upload Inputs */}
-       <ImageUploaderInput inputs={IMAGES_INPUT} />
+        <ImageUploaderInput inputs={IMAGES_INPUT} />
 
-        {/* Submit Button */}
         <button
           onClick={handleSubmit}
           disabled={loading}
@@ -160,7 +213,6 @@ export default function App() {
           {loading ? "Processing..." : "Verify Images"}
         </button>
 
-        {/* Match Result */}
         <ResultsModal
           matchResult={matchResult}
           imageOne={imageOne}

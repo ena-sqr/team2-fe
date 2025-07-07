@@ -44,7 +44,7 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
         {/* Image Previews */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="text-center">
-            <p className="mb-2 font-medium text-gray-600">Image 1 (Selfie)</p>
+            <p className="mb-2 font-medium text-gray-600">First Image</p>
             {imageOne && (
               <img
                 src={URL.createObjectURL(imageOne)}
@@ -54,7 +54,7 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
             )}
           </div>
           <div className="text-center">
-            <p className="mb-2 font-medium text-gray-600">Image 2 (ID)</p>
+            <p className="mb-2 font-medium text-gray-600">Second Image</p>
             {imageTwo && (
               <img
                 src={URL.createObjectURL(imageTwo)}
