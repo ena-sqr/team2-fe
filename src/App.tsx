@@ -29,7 +29,7 @@ export default function App() {
 
   const IMAGES_INPUT = [
     { label: "Image One", file: imageOne, setFile: setImageOne },
-    { label: "Image 2", file: imageTwo, setFile: setImageTwo },  
+    { label: "Image Two", file: imageTwo, setFile: setImageTwo },  
   ];
 
   const [matchResult, setMatchResult] = useState<{
