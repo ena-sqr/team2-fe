@@ -49,8 +49,8 @@ export default function App() {
     }
 
     const formData = new FormData();
-    formData.append("image1", imageOne);
-    formData.append("image2", imageTwo);
+    formData.append("image1", imageOne, imageOne.name);
+    formData.append("image2", imageTwo, imageOne.name);
     formData.append("model", model);
     formData.append("distance_metric", metric);
     formData.append("threshold", THRESHOLD);
@@ -70,22 +70,36 @@ export default function App() {
       setLoading(true);
       setMatchResult(null);
 
+      const formData = new FormData();
+      
+      formData.append("image1", imageOne, imageOne.name);
+      formData.append("image2", imageTwo, imageTwo.name);
+      formData.append("model", "VGG-Face");
+      formData.append("distance_metric", "cosine");
+      formData.append("threshold", "0.4");
+
       const response = await fetch(`${API_URL}/compare`, {
         method: 'POST',
         body: formData,
       });
 
-      console.log('response', response);
-      let result = await response.json();
-   
-      if (result.success) {
-        setMatchResult(result);
-      } else {
-        alert('Face match failed or invalid response');
+      const text = await response.text();
+      console.log('Raw response:', text);
+
+      try {
+        const result = JSON.parse(text);
+        if (result.success) {
+          setMatchResult(result);
+        } else {
+          alert('Face match failed or invalid response');
+        }
+      } catch (e) {
+        console.error('Failed to parse response JSON', text);
+        alert('Invalid server response. Check if ngrok server is running.');
       }
     } catch (err) {
-      console.log(err);
-      alert("Something went wront. Please try again.");
+      console.log('err', err);
+      alert("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
