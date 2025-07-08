@@ -47,9 +47,9 @@ interface AnalyzeFace {
 }
 
 const TABS = [
-  { key: "match", label: "Face Match" },
-  { key: "liveness", label: "Liveness" },
-  { key: "analyze", label: "Analyze" },
+  { key: "match", label: "FACE MATCHING" },
+  { key: "liveness", label: "LIVENESS" },
+  { key: "analyze", label: "ANALYZE" },
 ] as const
 
 export default function App() {
