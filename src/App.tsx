@@ -1,20 +1,34 @@
 import { useEffect, useState } from "react";
-import ResultsModal from './components/ResultsModal';
-import ImageUploaderInput from './components/ImageUploaderInput';
-import { getThresholdForModel, ModelsConfig, DistanceMetric} from "./utils/threshold";
+import ResultsModal from "./components/ResultsModal";
+import ImageUploaderInput from "./components/ImageUploaderInput";
+import {
+  getThresholdForModel,
+  ModelsConfig,
+  DistanceMetric,
+} from "./utils/threshold";
 import { distanceMetricDescriptions } from "./utils/metrics";
+import { fetcher } from "./api/fetcher";
+import { mutate } from "./api/mutator";
 
 const DEFAULT_MODEL = "VGG-Face";
 const DEFAULT_METRIC = "cosine";
 const DEFAULT_THRESHOLD = "0.68";
 
 const MODELS = [
-  "VGG-Face", "Facenet", "Facenet512", "OpenFace", "DeepFace",
-  "DeepID", "ArcFace", "Dlib", "SFace", "GhostFaceNet", "Buffalo_L",
+  "VGG-Face",
+  "Facenet",
+  "Facenet512",
+  "OpenFace",
+  "DeepFace",
+  "DeepID",
+  "ArcFace",
+  "Dlib",
+  "SFace",
+  "GhostFaceNet",
+  "Buffalo_L",
 ];
 
 const METRICS = ["cosine", "euclidean", "euclidean_l2"];
-const API_URL = 'https://e569-2001-4455-803f-e800-a1cd-a510-6234-45db.ngrok-free.app';
 
 export default function App() {
   const [imageOne, setImageOne] = useState<File | null>(null);
@@ -23,7 +37,7 @@ export default function App() {
   const [model, setModel] = useState(DEFAULT_MODEL);
   const [metric, setMetric] = useState(DEFAULT_METRIC as DistanceMetric);
   const [threshold, setThreshold] = useState(DEFAULT_THRESHOLD);
-  const [modelDescription, setModelDescription] = useState('');
+  const [modelDescription, setModelDescription] = useState("");
   const [modelsConfig, setModelsConfig] = useState({} as ModelsConfig);
 
   const [matchResult, setMatchResult] = useState<{
@@ -38,7 +52,7 @@ export default function App() {
 
   const IMAGES_INPUT = [
     { label: "First Image", file: imageOne, setFile: setImageOne },
-    { label: "Second Image", file: imageTwo, setFile: setImageTwo },  
+    { label: "Second Image", file: imageTwo, setFile: setImageTwo },
   ];
 
   useEffect(() => {
@@ -50,19 +64,17 @@ export default function App() {
       setLoading(true);
       setMatchResult(null);
 
-      const response = await fetch(`${API_URL}/models`);
-      const text = await response.text();
-      console.log('Get Models Response:', text);
-
-      const result = JSON.parse(text);
-      console.log('Parsed Models:', result);
+      const result = await fetcher<any>("/models");
+      console.log("Parsed Models:", result);
       setModelsConfig(result);
 
       setModel(result.recommended_model);
       setMetric(result.recommended_distance_metric as DistanceMetric);
-      setModelDescription(result.models[result.recommended_model]?.description ?? "");
+      setModelDescription(
+        result.models[result.recommended_model]?.description ?? ""
+      );
     } catch (err) {
-      console.error('Error fetching models:', err);
+      console.error("Error fetching models:", err);
     } finally {
       setLoading(false);
     }
@@ -91,28 +103,23 @@ export default function App() {
       formData.append("distance_metric", metric);
       formData.append("threshold", threshold);
 
-      const response = await fetch(`${API_URL}/compare`, {
-        method: 'POST',
+      const result = await mutate<any>("compare", {
+        method: "POST",
         body: formData,
       });
 
-      const text = await response.text();
-      console.log('Raw response:', text);
-
-      const result = JSON.parse(text);
       if (result.success) {
         setMatchResult(result);
       } else {
-        alert('Face match failed. Please upload valid images.');
+        alert("Face match failed. Please upload valid images.");
       }
     } catch (err) {
-      console.error('Error during comparison:', err);
+      console.error("Error during comparison:", err);
       alert("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   };
-
 
   const handleModelChange = (value: string) => {
     setModel(value);
@@ -124,8 +131,8 @@ export default function App() {
       setThreshold(thresholdValue.toString());
     }
 
-   setModelDescription(modelsConfig.models[value]?.description ?? "");
-  }
+    setModelDescription(modelsConfig.models[value]?.description ?? "");
+  };
 
   const handleMetricsChange = (value: DistanceMetric) => {
     setMetric(value as DistanceMetric);
@@ -136,7 +143,7 @@ export default function App() {
     if (thresholdValue !== null) {
       setThreshold(thresholdValue.toString());
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
@@ -152,16 +159,18 @@ export default function App() {
             </label>
             <select
               value={model}
-              onChange={(e) => { handleModelChange(e.target.value) }}
+              onChange={(e) => {
+                handleModelChange(e.target.value);
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
             >
               {MODELS.map((m) => (
-                <option key={m} value={m}>{m}</option>
+                <option key={m} value={m}>
+                  {m}
+                </option>
               ))}
             </select>
-            <p className="mt-1 text-xs text-gray-500">
-              {modelDescription}
-            </p>
+            <p className="mt-1 text-xs text-gray-500">{modelDescription}</p>
           </div>
 
           <div>
@@ -176,7 +185,9 @@ export default function App() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
             >
               {METRICS.map((m) => (
-                <option key={m} value={m}>{m}</option>
+                <option key={m} value={m}>
+                  {m}
+                </option>
               ))}
             </select>
             <p className="text-xs text-gray-500 mt-1">
@@ -198,7 +209,8 @@ export default function App() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
             />
             <p className="mt-1 text-xs text-gray-500">
-              Maximum distance allowed between faces to consider them a match. Lower values mean stricter matching.
+              Maximum distance allowed between faces to consider them a match.
+              Lower values mean stricter matching.
             </p>
           </div>
         </div>
