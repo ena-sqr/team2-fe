@@ -123,6 +123,11 @@ export default function App() {
     setLiveness(null);
   }, [tab]);
 
+  useEffect(() => {
+    setAnalyze(null);
+    setLiveness(null);
+  }, [imageOne]);
+
   const handleSubmit = async () => {
     if (!imageOne || !imageTwo) {
       alert("Please upload both images.");
@@ -213,7 +218,7 @@ export default function App() {
 
    const renderLiveness = (result: LivenessResult | null) =>
     result ? (
-      <div className="text-sm mt-1 text-left">
+      <div className="text-sm mt-1 text-center">
         <p>
           <span className="font-medium">Liveness:</span>{" "}
           <span
@@ -232,7 +237,7 @@ export default function App() {
 
   const renderAnalyze = (face: AnalyzeFace | null) =>
     face ? (
-      <div className="text-sm mt-2 text-left">
+      <div className="text-sm mt-2 text-center">
         <p>
           <span className="font-medium">Age:</span> {face.age}
         </p>
@@ -358,7 +363,7 @@ export default function App() {
         {tab === "liveness" && (
           <>
             <ImageUploaderInput inputs={SINGLE_IMAGE_INPUT} />
-            {liveness && renderLiveness(liveness)}
+            {!loading && liveness && renderLiveness(liveness)}
             <button
               onClick={handleLivenessCheck}
               disabled={loading}
@@ -366,20 +371,38 @@ export default function App() {
             >
               {loading ? "Processing..." : "Check Liveness"}
             </button>
-          </>
+            { !loading && liveness &&
+               <button
+                onClick={()=>{setImageOne(null)}}
+                disabled={loading}
+                className="mt-2 w-full inline-flex justify-center items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-xl transition disabled:opacity-60"
+              >
+                Clear
+              </button>
+            }
+          </> 
         )}
 
         {tab === "analyze" && (
           <>
             <ImageUploaderInput inputs={SINGLE_IMAGE_INPUT} />
-            {analyze && renderAnalyze(analyze)}
+            {!loading && analyze && renderAnalyze(analyze)}
             <button
               onClick={handleAnalyzeCheck}
               disabled={loading}
-              className="mt-6 w-full inline-flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-xl transition disabled:opacity-60"
+              className="mt-6 w-full inline-flex justify-center items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-xl transition disabled:opacity-60"
             >
               {loading ? "Processing..." : "Analyze"}
             </button>
+            { !loading && liveness &&
+              <button
+                onClick={()=>{setImageOne(null)}}
+                disabled={loading}
+                className="mt-2 w-full inline-flex justify-center items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-xl transition disabled:opacity-60"
+              >
+                Clear
+              </button>
+            }
           </>
         )}
       </div>
