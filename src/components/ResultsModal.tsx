@@ -2,7 +2,6 @@
 import React from "react";
 import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/solid";
 
-
 interface MatchResult {
   verified: boolean;
   similarity_percentage: number;
@@ -27,45 +26,6 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
 }) => {
 
   if (!matchResult) return null;
-
-  const renderLiveness = (result: LivenessResult | null) =>
-    result ? (
-      <div className="text-sm mt-1 text-left">
-        <p>
-          <span className="font-medium">Liveness:</span>{" "}
-          <span
-            className={`font-semibold ${
-              result.is_live ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {result.is_live ? "Live" : "Spoofed"} ({(result.confidence * 100).toFixed(2)}%)
-          </span>
-        </p>
-        <p className="text-xs text-gray-500">{result.message}</p>
-      </div>
-    ) : (
-      <p className="text-sm text-gray-400">Checking liveness...</p>
-    );
-
-  const renderAnalyze = (face: AnalyzeFace | null) =>
-    face ? (
-      <div className="text-sm mt-2 text-left">
-        <p>
-          <span className="font-medium">Age:</span> {face.age}
-        </p>
-        <p>
-          <span className="font-medium">Gender:</span> {face.gender.dominant}
-        </p>
-        <p>
-          <span className="font-medium">Race:</span> {face.race.dominant}
-        </p>
-        <p>
-          <span className="font-medium">Emotion:</span> {face.emotion.dominant}
-        </p>
-      </div>
-    ) : (
-      <p className="text-sm text-gray-400">Analyzing face...</p>
-    );
 
   return (
     <div
