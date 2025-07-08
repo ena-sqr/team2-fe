@@ -394,7 +394,7 @@ export default function App() {
             >
               {loading ? "Processing..." : "Analyze"}
             </button>
-            { !loading && liveness &&
+            { !loading && analyze &&
               <button
                 onClick={()=>{setImageOne(null)}}
                 disabled={loading}
