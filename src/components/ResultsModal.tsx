@@ -25,7 +25,6 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
   detectorBackend
 }) => {
 
-
   if (!matchResult) return null;
 
   return (
