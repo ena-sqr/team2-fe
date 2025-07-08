@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import ResultsModal from "./components/ResultsModal";
 import ImageUploaderInput from "./components/ImageUploaderInput";
+import AdvancedOptions from "./components/AdvancedOptions";
+import { Cog6ToothIcon } from "@heroicons/react/24/solid";
 import {
   getThresholdForModel,
   ModelsConfig,
   DistanceMetric,
 } from "./utils/threshold";
-import { distanceMetricDescriptions } from "./utils/metrics";
 import { fetcher } from "./api/fetcher";
 import { mutate } from "./api/mutator";
 
@@ -15,20 +16,21 @@ const DEFAULT_METRIC = "cosine";
 const DEFAULT_THRESHOLD = "0.68";
 
 const MODELS = [
-  "VGG-Face",
-  "Facenet",
-  "Facenet512",
+  "VGG-Face", 
+  "Facenet", 
+  "Facenet512", 
   "OpenFace",
   "DeepFace",
-  "DeepID",
-  "ArcFace",
-  "Dlib",
-  "SFace",
-  "GhostFaceNet",
+  "DeepID", 
+  "ArcFace", 
+  "Dlib", 
+  "SFace", 
+  "GhostFaceNet", 
   "Buffalo_L",
 ];
 
-const METRICS = ["cosine", "euclidean", "euclidean_l2"];
+const API_URL = "https://2917cc31b368.ngrok-free.app/"; //placeholder
+
 
 export default function App() {
   const [imageOne, setImageOne] = useState<File | null>(null);
@@ -39,6 +41,10 @@ export default function App() {
   const [threshold, setThreshold] = useState(DEFAULT_THRESHOLD);
   const [modelDescription, setModelDescription] = useState("");
   const [modelsConfig, setModelsConfig] = useState({} as ModelsConfig);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [detectorBackend, setDetectorBackend] = useState('');
+  const [detectorBackendFromAPI, setDetectorBackendFromAPI] = useState([]);
+  const [apiUrl, setApiUrl] = useState(API_URL);
 
   const [matchResult, setMatchResult] = useState<{
     verified: boolean;
@@ -55,30 +61,29 @@ export default function App() {
     { label: "Second Image", file: imageTwo, setFile: setImageTwo },
   ];
 
-  useEffect(() => {
-    fetchModels();
-  }, []);
 
-  const fetchModels = async () => {
+  const fetchModels = useCallback(async () => {
     try {
       setLoading(true);
       setMatchResult(null);
 
-      const result = await fetcher<any>("/models");
-      console.log("Parsed Models:", result);
+      const result = await fetcher<any>(`${apiUrl}/models`);
       setModelsConfig(result);
 
       setModel(result.recommended_model);
       setMetric(result.recommended_distance_metric as DistanceMetric);
-      setModelDescription(
-        result.models[result.recommended_model]?.description ?? ""
-      );
+      setModelDescription(result.models[result.recommended_model]?.description ?? "");
+      setDetectorBackendFromAPI(result.backends);
     } catch (err) {
       console.error("Error fetching models:", err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiUrl]); 
+
+  useEffect(() => {
+    fetchModels();
+  }, [fetchModels])
 
   const handleSubmit = async () => {
     if (!imageOne || !imageTwo) {
@@ -103,7 +108,7 @@ export default function App() {
       formData.append("distance_metric", metric);
       formData.append("threshold", threshold);
 
-      const result = await mutate<any>("compare", {
+      const result = await mutate<any>(`${apiUrl}/compare`, {
         method: "POST",
         body: formData,
       });
@@ -123,23 +128,16 @@ export default function App() {
 
   const handleModelChange = (value: string) => {
     setModel(value);
-
-    // Use current selected metric
     const thresholdValue = getThresholdForModel(modelsConfig, value, metric);
-
     if (thresholdValue !== null) {
       setThreshold(thresholdValue.toString());
     }
-
     setModelDescription(modelsConfig.models[value]?.description ?? "");
   };
 
   const handleMetricsChange = (value: DistanceMetric) => {
-    setMetric(value as DistanceMetric);
-
-    // Use current selected metric
+    setMetric(value);
     const thresholdValue = getThresholdForModel(modelsConfig, model, value);
-
     if (thresholdValue !== null) {
       setThreshold(thresholdValue.toString());
     }
@@ -159,60 +157,39 @@ export default function App() {
             </label>
             <select
               value={model}
-              onChange={(e) => {
-                handleModelChange(e.target.value);
-              }}
+              onChange={(e) => handleModelChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
             >
               {MODELS.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
+                <option key={m} value={m}>{m}</option>
               ))}
             </select>
             <p className="mt-1 text-xs text-gray-500">{modelDescription}</p>
           </div>
 
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700">
-              Distance Metric
-            </label>
-            <select
-              value={metric}
-              onChange={(e) => {
-                handleMetricsChange(e.target.value as DistanceMetric);
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
-            >
-              {METRICS.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-500 mt-1">
-              {distanceMetricDescriptions[metric]}
-            </p>
-          </div>
+          {/* Advanced Options Toggle Button */}
+          <button
+            onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+            className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
+          >
+            <Cog6ToothIcon className="w-4 h-4" />
+            {showAdvancedOptions ? "Hide Advanced Options" : "Show Advanced Options"}
+          </button>
 
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700">
-              Threshold
-            </label>
-            <input
-              type="number"
-              min={0}
-              max={1}
-              step={0.01}
-              value={threshold}
-              onChange={(e) => setThreshold(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
+          {/* Advanced Options */}
+          {showAdvancedOptions && (
+            <AdvancedOptions
+              metric={metric}
+              threshold={threshold}
+              detectorBackend={detectorBackend}
+              apiUrl={apiUrl}
+              detectorBackendFromAPI={detectorBackendFromAPI}
+              onMetricChange={handleMetricsChange}
+              onThresholdChange={(val) => setThreshold(val)}
+              onDetectorBackendChange={(val:string) => setDetectorBackend(val)}
+              onChangeApiUrl={(val:string) => setApiUrl(val)}
             />
-            <p className="mt-1 text-xs text-gray-500">
-              Maximum distance allowed between faces to consider them a match.
-              Lower values mean stricter matching.
-            </p>
-          </div>
+          )}
         </div>
 
         <ImageUploaderInput inputs={IMAGES_INPUT} />
@@ -230,6 +207,8 @@ export default function App() {
           imageOne={imageOne}
           imageTwo={imageTwo}
           onClose={() => setMatchResult(null)}
+          apiUrl={apiUrl}
+          detectorBackend={detectorBackend}
         />
       </div>
     </div>

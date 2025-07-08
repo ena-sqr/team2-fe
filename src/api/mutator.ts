@@ -1,10 +1,8 @@
-import { API_URL } from "../const/config";
-
 export type MutatorOptions = RequestInit;
 
 export async function mutate<T = unknown>(
   url: string,
-  options: MutatorOptions
+  options: MutatorOptions,
 ): Promise<T> {
   const defaultHeaders: HeadersInit = {
     "ngrok-skip-browser-warning": "true",
@@ -19,7 +17,7 @@ export async function mutate<T = unknown>(
     headers: defaultHeaders,
   };
 
-  const response = await fetch(`${API_URL}/${url}`, config);
+  const response = await fetch(`${url}`, config);
 
   if (!response.ok) {
     const errorText = await response.text();
