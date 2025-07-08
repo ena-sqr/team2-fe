@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/img-redundant-alt */
 import React from "react";
 import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/solid";
 
@@ -11,6 +12,8 @@ interface ResultsModalProps {
   imageOne: File | null;
   imageTwo: File | null;
   onClose: () => void;
+  apiUrl: string;
+  detectorBackend: string;
 }
 
 const ResultsModal: React.FC<ResultsModalProps> = ({
@@ -18,7 +21,11 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
   imageOne,
   imageTwo,
   onClose,
+  apiUrl,
+  detectorBackend
 }) => {
+
+
   if (!matchResult) return null;
 
   return (
@@ -41,26 +48,33 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
           Results
         </h2>
 
-        {/* Image Previews */}
+        {/* Image Previews + Liveness + Analyze */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {/* First Image */}
           <div className="text-center">
             <p className="mb-2 font-medium text-gray-600">First Image</p>
             {imageOne && (
-              <img
-                src={URL.createObjectURL(imageOne)}
-                alt="Selfie preview"
-                className="rounded-xl mx-auto max-h-64 object-cover shadow"
-              />
+              <>
+                <img
+                  src={URL.createObjectURL(imageOne)}
+                  alt="First Image"
+                  className="rounded-xl mx-auto max-h-64 object-cover shadow"
+                />
+              </>
             )}
           </div>
+
+          {/* Second Image */}
           <div className="text-center">
             <p className="mb-2 font-medium text-gray-600">Second Image</p>
             {imageTwo && (
-              <img
-                src={URL.createObjectURL(imageTwo)}
-                alt="ID preview"
-                className="rounded-xl mx-auto max-h-64 object-cover shadow"
-              />
+              <>
+                <img
+                  src={URL.createObjectURL(imageTwo)}
+                  alt="Second Image"
+                  className="rounded-xl mx-auto max-h-64 object-cover shadow"
+                />
+              </>
             )}
           </div>
         </div>
@@ -75,12 +89,12 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
             {matchResult.verified ? (
               <>
                 <CheckCircleIcon className="w-6 h-6" />
-                Verified Match
+                Verified Match: {matchResult.similarity_percentage}%
               </>
             ) : (
               <>
                 <XCircleIcon className="w-6 h-6" />
-                Not Verified Match
+                Not Verified Match: {matchResult.similarity_percentage}%
               </>
             )}
           </div>
