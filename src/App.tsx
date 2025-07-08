@@ -18,16 +18,16 @@ const DEFAULT_THRESHOLD = "0.68";
 const API_URL = "https://2917cc31b368.ngrok-free.app/";
 
 const MODELS = [
-  "VGG-Face",
-  "Facenet",
-  "Facenet512",
+  "VGG-Face", 
+  "Facenet", 
+  "Facenet512", 
   "OpenFace",
   "DeepFace",
-  "DeepID",
-  "ArcFace",
-  "Dlib",
-  "SFace",
-  "GhostFaceNet",
+  "DeepID", 
+  "ArcFace", 
+  "Dlib", 
+  "SFace", 
+  "GhostFaceNet", 
   "Buffalo_L",
 ];
 
