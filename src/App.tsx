@@ -390,7 +390,7 @@ export default function App() {
             <button
               onClick={handleAnalyzeCheck}
               disabled={loading}
-              className="mt-6 w-full inline-flex justify-center items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-xl transition disabled:opacity-60"
+              className="mt-6 w-full inline-flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-xl transition disabled:opacity-60"
             >
               {loading ? "Processing..." : "Analyze"}
             </button>
