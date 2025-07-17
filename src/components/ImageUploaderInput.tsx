@@ -24,9 +24,9 @@ const ImageUploaderInput: React.FC<Props> = ({ inputs }) => {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Upload {input.label}
           </label>
-          <label className="flex flex-col items-center justify-center border-2 border-dashed border-indigo-300 rounded-xl w-full px-4 py-6 bg-indigo-50 hover:bg-indigo-100 cursor-pointer transition">
-            <ArrowUpTrayIcon className="w-6 h-6 mb-2 text-indigo-500" />
-            <span className="text-sm font-medium text-indigo-700">
+          <label className="flex flex-col items-center justify-center border-2 border-dashed border-green-600 rounded-xl w-full px-4 py-6 bg-green-50 hover:bg-green-100 cursor-pointer transition">
+            <ArrowUpTrayIcon className="w-6 h-6 mb-2 text-green-800" />
+            <span className="text-sm font-medium text-green-700">
               Click to upload
             </span>
             <input

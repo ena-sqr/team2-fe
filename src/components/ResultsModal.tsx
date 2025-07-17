@@ -88,12 +88,29 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
             {matchResult.verified ? (
               <>
                 <CheckCircleIcon className="w-6 h-6" />
-                Verified Match: {matchResult.similarity_percentage}%
+                Verified
               </>
             ) : (
               <>
                 <XCircleIcon className="w-6 h-6" />
-                Not Verified Match: {matchResult.similarity_percentage}%
+                Not Verified
+              </>
+            )}
+          </div>
+        </div>
+         <div className="text-center mb-1">
+          <div
+            className={`inline-flex items-center gap-2 text-xl font-semibold ${
+              matchResult.verified ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {matchResult.verified ? (
+              <>
+                Similarity Percentage: {matchResult.similarity_percentage}%
+              </>
+            ) : (
+              <>
+                Similarity Percentage: {matchResult.similarity_percentage}%
               </>
             )}
           </div>

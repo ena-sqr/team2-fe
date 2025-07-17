@@ -11,11 +11,12 @@ import {
 import { fetcher } from "./api/fetcher";
 import { mutate } from "./api/mutator";
 import { render } from "@testing-library/react";
+import logo from "./paraforesightLogo.png";
 
 const DEFAULT_MODEL = "VGG-Face";
 const DEFAULT_METRIC = "cosine";
 const DEFAULT_THRESHOLD = "0.68";
-const API_URL = "https://339f2afe9271.ngrok-free.app/";
+const API_URL = "https://339f2afe9271.ngrok-free.app";
 
 const MODELS = [
   "VGG-Face",
@@ -220,7 +221,6 @@ export default function App() {
     result ? (
       <div className="text-sm mt-1 text-center">
         <p>
-          <span className="font-medium">Liveness:</span>{" "}
           <span
             className={`font-semibold ${
               result.is_live ? "text-green-600" : "text-red-600"
@@ -274,137 +274,146 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="bg-white border border-gray-200 shadow-md rounded-3xl p-8 w-full max-w-2xl">
-        {/* Tabs */}
-        <div className="flex justify-center mb-6 space-x-6">
-          {TABS.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`px-4 py-2 text-sm font-semibold border-b-2 transition ${
-                tab === key
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-blue-600"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+    <div className="min-h-screen flex items-center justify-center bg-ai-pattern p-4">
+      <div className="w-full max-w-2xl">
+        {/* Logo */}
+        <div className="flex justify-center mb-6">
+          <img src={logo} alt="App Logo" className="custom-height" />
         </div>
 
-        {tab === "match" && (
-          <>
-            <div className="grid gap-4 mb-6">
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">
-                  Face Recognition Model
-                </label>
-                <select
-                  value={model}
-                  onChange={(e) => handleModelChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
+        <div className="bg-gray-50 border border-gray-200 shadow-md rounded-2xl p-8">
+        
+    
+          {/* Tabs */}
+          <div className="flex justify-center mb-6 space-x-6">
+            {TABS.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className={`px-4 py-2 text-sm font-semibold border-b-2 transition ${
+                  tab === key
+                    ? "border-green-600 text-green-600"
+                    : "border-transparent text-gray-500 hover:text-green-600"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {tab === "match" && (
+            <>
+              <div className="grid gap-4 mb-6">
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
+                    Face Recognition Model
+                  </label>
+                  <select
+                    value={model}
+                    onChange={(e) => handleModelChange(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    {MODELS.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">{modelDescription}</p>
+                </div>
+
+                <button
+                  onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+                  className="flex items-center gap-2 text-sm text-green-600 hover:underline"
                 >
-                  {MODELS.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-1 text-xs text-gray-500">{modelDescription}</p>
+                  <Cog6ToothIcon className="w-4 h-4" />
+                  {showAdvancedOptions
+                    ? "Hide Advanced Options"
+                    : "Show Advanced Options"}
+                </button>
+
+                {showAdvancedOptions && (
+                  <AdvancedOptions
+                    metric={metric}
+                    threshold={threshold}
+                    detectorBackend={detectorBackend}
+                    apiUrl={apiUrl}
+                    detectorBackendFromAPI={detectorBackendFromAPI}
+                    onMetricChange={handleMetricsChange}
+                    onThresholdChange={setThreshold}
+                    onDetectorBackendChange={setDetectorBackend}
+                    onChangeApiUrl={setApiUrl}
+                  />
+                )}
               </div>
 
+              <ImageUploaderInput inputs={IMAGES_INPUT} />
+
               <button
-                onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-                className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
-              >
-                <Cog6ToothIcon className="w-4 h-4" />
-                {showAdvancedOptions
-                  ? "Hide Advanced Options"
-                  : "Show Advanced Options"}
-              </button>
-
-              {showAdvancedOptions && (
-                <AdvancedOptions
-                  metric={metric}
-                  threshold={threshold}
-                  detectorBackend={detectorBackend}
-                  apiUrl={apiUrl}
-                  detectorBackendFromAPI={detectorBackendFromAPI}
-                  onMetricChange={handleMetricsChange}
-                  onThresholdChange={setThreshold}
-                  onDetectorBackendChange={setDetectorBackend}
-                  onChangeApiUrl={setApiUrl}
-                />
-              )}
-            </div>
-
-            <ImageUploaderInput inputs={IMAGES_INPUT} />
-
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="mt-6 w-full inline-flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-xl transition disabled:opacity-60"
-            >
-              {loading ? "Processing..." : "Verify Images"}
-            </button>
-
-            <ResultsModal
-              matchResult={matchResult}
-              imageOne={imageOne}
-              imageTwo={imageTwo}
-              onClose={() => setMatchResult(null)}
-              apiUrl={apiUrl}
-              detectorBackend={detectorBackend}
-            />
-          </>
-        )}
-
-        {tab === "liveness" && (
-          <>
-            <ImageUploaderInput inputs={SINGLE_IMAGE_INPUT} />
-            {!loading && liveness && renderLiveness(liveness)}
-            <button
-              onClick={handleLivenessCheck}
-              disabled={loading}
-              className="mt-6 w-full inline-flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-xl transition disabled:opacity-60"
-            >
-              {loading ? "Processing..." : "Check Liveness"}
-            </button>
-            { !loading && liveness &&
-               <button
-                onClick={()=>{setImageOne(null)}}
+                onClick={handleSubmit}
                 disabled={loading}
-                className="mt-2 w-full inline-flex justify-center items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-xl transition disabled:opacity-60"
+                className="mt-6 w-full inline-flex justify-center items-center gap-2 bg-green-600 hover:bg-green-800 text-white font-semibold py-2 px-4 rounded-xl transition disabled:opacity-60"
               >
-                Clear
+                {loading ? "Processing..." : "Verify Images"}
               </button>
-            }
-          </> 
-        )}
 
-        {tab === "analyze" && (
-          <>
-            <ImageUploaderInput inputs={SINGLE_IMAGE_INPUT} />
-            {!loading && analyze && renderAnalyze(analyze)}
-            <button
-              onClick={handleAnalyzeCheck}
-              disabled={loading}
-              className="mt-6 w-full inline-flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-xl transition disabled:opacity-60"
-            >
-              {loading ? "Processing..." : "Analyze"}
-            </button>
-            { !loading && analyze &&
+              <ResultsModal
+                matchResult={matchResult}
+                imageOne={imageOne}
+                imageTwo={imageTwo}
+                onClose={() => setMatchResult(null)}
+                apiUrl={apiUrl}
+                detectorBackend={detectorBackend}
+              />
+            </>
+          )}
+
+          {tab === "liveness" && (
+            <>
+              <ImageUploaderInput inputs={SINGLE_IMAGE_INPUT} />
+              {!loading && liveness && renderLiveness(liveness)}
               <button
-                onClick={()=>{setImageOne(null)}}
+                onClick={handleLivenessCheck}
                 disabled={loading}
-                className="mt-2 w-full inline-flex justify-center items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-xl transition disabled:opacity-60"
+                className="mt-6 w-full inline-flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-xl transition disabled:opacity-60"
               >
-                Clear
+                {loading ? "Processing..." : "Check Liveness"}
               </button>
-            }
-          </>
-        )}
+              { !loading && liveness &&
+                <button
+                  onClick={()=>{setImageOne(null)}}
+                  disabled={loading}
+                  className="mt-2 w-full inline-flex justify-center items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-xl transition disabled:opacity-60"
+                >
+                  Clear
+                </button>
+              }
+            </> 
+          )}
+
+          {tab === "analyze" && (
+            <>
+              <ImageUploaderInput inputs={SINGLE_IMAGE_INPUT} />
+              {!loading && analyze && renderAnalyze(analyze)}
+              <button
+                onClick={handleAnalyzeCheck}
+                disabled={loading}
+                className="mt-6 w-full inline-flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-xl transition disabled:opacity-60"
+              >
+                {loading ? "Processing..." : "Analyze"}
+              </button>
+              { !loading && analyze &&
+                <button
+                  onClick={()=>{setImageOne(null)}}
+                  disabled={loading}
+                  className="mt-2 w-full inline-flex justify-center items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-xl transition disabled:opacity-60"
+                >
+                  Clear
+                </button>
+              }
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
