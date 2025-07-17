@@ -15,7 +15,7 @@ import { render } from "@testing-library/react";
 const DEFAULT_MODEL = "VGG-Face";
 const DEFAULT_METRIC = "cosine";
 const DEFAULT_THRESHOLD = "0.68";
-const API_URL = "https://2917cc31b368.ngrok-free.app/";
+const API_URL = "https://339f2afe9271.ngrok-free.app/";
 
 const MODELS = [
   "VGG-Face",
