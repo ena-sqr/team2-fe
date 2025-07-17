@@ -105,6 +105,12 @@ export default function App() {
         result.models[result.recommended_model]?.description ?? ""
       );
       setDetectorBackendFromAPI(result.backends);
+      try {
+          setThreshold(result.models[result.recommended_model][result.recommended_distance_metric] ?? "");
+      } catch(e) {
+        setThreshold(DEFAULT_THRESHOLD);
+      }
+    
     } catch (err) {
       console.error("Error fetching models:", err);
     } finally {
