@@ -11,46 +11,18 @@ import {
 import { fetcher } from "./api/fetcher";
 import { mutate } from "./api/mutator";
 import logo from "./paraforesightLogo.png";
-
-const DEFAULT_MODEL = "VGG-Face";
-const DEFAULT_METRIC = "cosine";
-const DEFAULT_THRESHOLD = "0.68";
-const API_URL = "https://8131ef2085ef.ngrok-free.app";
-
-const MODELS = [
-  "VGG-Face",
-  "Facenet",
-  "Facenet512",
-  "OpenFace",
-  "DeepFace",
-  "DeepID",
-  "ArcFace",
-  "Dlib",
-  "SFace",
-  "GhostFaceNet",
-  "Buffalo_L",
-];
-
-
-interface LivenessResult {
-  is_live: boolean;
-  confidence: number;
-  message: string;
-  success: boolean;
-}
-
-interface AnalyzeFace {
-  age: number;
-  gender: { dominant: string, probabilities: {} };
-  race: { dominant: string,  probabilities: {}};
-  emotion: { dominant: string, probabilities: {} };
-}
-
-const TABS = [
-  { key: "match", label: "FACE MATCHING" },
-  { key: "liveness", label: "LIVENESS" },
-  { key: "analyze", label: "ANALYZE" },
-] as const
+import { useLocalStorage } from "./hooks";
+import {
+  API_URL,
+  DEFAULT_DETECTOR,
+  DEFAULT_METRIC,
+  DEFAULT_MODEL,
+  DEFAULT_THRESHOLD,
+  MODELS,
+  TABS,
+} from "./const/config";
+import { LivenessResult } from "./types/liveness-result";
+import { AnalyzeFace } from "./types/analyze-face";
 
 export default function App() {
   const [tab, setTab] = useState<"match" | "liveness" | "analyze">("match");
@@ -64,10 +36,9 @@ export default function App() {
   const [modelDescription, setModelDescription] = useState("");
   const [modelsConfig, setModelsConfig] = useState({} as ModelsConfig);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-  const [detectorBackend, setDetectorBackend] = useState("");
+  const [detectorBackend, setDetectorBackend] = useState(DEFAULT_DETECTOR);
   const [detectorBackendFromAPI, setDetectorBackendFromAPI] = useState([]);
-  const [apiUrl, setApiUrl] = useState(API_URL);
-
+  const [apiUrl, setApiUrl] = useLocalStorage<string>("apiUrl", API_URL);
   const [liveness, setLiveness] = useState<LivenessResult | null>(null);
   const [analyze, setAnalyze] = useState<AnalyzeFace | null>(null);
 
@@ -105,11 +76,14 @@ export default function App() {
       );
       setDetectorBackendFromAPI(result.backends);
       try {
-          setThreshold(result.models[result.recommended_model][result.recommended_distance_metric] ?? "");
-      } catch(e) {
+        setThreshold(
+          result.models[result.recommended_model][
+            result.recommended_distance_metric
+          ] ?? ""
+        );
+      } catch (e) {
         setThreshold(DEFAULT_THRESHOLD);
       }
-    
     } catch (err) {
       console.error("Error fetching models:", err);
     } finally {
@@ -156,6 +130,7 @@ export default function App() {
       formData.append("model", model);
       formData.append("distance_metric", metric);
       formData.append("threshold", threshold);
+      formData.append("detector_backend", detectorBackend);
 
       const result = await mutate<any>(`${apiUrl}/compare`, {
         method: "POST",
@@ -176,8 +151,7 @@ export default function App() {
   };
 
   const handleLivenessCheck = async () => {
-
-    if (!imageOne ) {
+    if (!imageOne) {
       alert("Please upload an image.");
       return;
     }
@@ -188,7 +162,7 @@ export default function App() {
 
     setLoading(true);
     try {
-        const result = await mutate<any>(`${apiUrl}/liveness-check`, {
+      const result = await mutate<any>(`${apiUrl}/liveness-check`, {
         method: "POST",
         body: formData,
       });
@@ -198,9 +172,9 @@ export default function App() {
       console.error("Liveness error:", e);
     }
   };
-  
+
   const handleAnalyzeCheck = async () => {
-    if (!imageOne ) {
+    if (!imageOne) {
       alert("Please upload an image.");
       return;
     }
@@ -210,7 +184,7 @@ export default function App() {
 
     setLoading(true);
     try {
-        const result = await mutate<any>(`${apiUrl}/analyze`, {
+      const result = await mutate<any>(`${apiUrl}/analyze`, {
         method: "POST",
         body: formData,
       });
@@ -222,7 +196,7 @@ export default function App() {
     }
   };
 
-   const renderLiveness = (result: LivenessResult | null) =>
+  const renderLiveness = (result: LivenessResult | null) =>
     result ? (
       <div className="text-sm mt-1 text-center">
         <p>
@@ -231,7 +205,8 @@ export default function App() {
               result.is_live ? "text-green-600" : "text-red-600"
             }`}
           >
-            {result.is_live ? "Live" : "Spoofed"} ({(result.confidence * 100).toFixed(2)}%)
+            {result.is_live ? "Live" : "Spoofed"} (
+            {(result.confidence * 100).toFixed(2)}%)
           </span>
         </p>
         <p className="text-xs text-gray-500">{result.message}</p>
@@ -255,76 +230,90 @@ export default function App() {
         <p>
           <span className="font-medium">Emotion:</span> {face.emotion.dominant}
         </p>
-      <div className="text-sm mt-2 space-y-4 flex flex-col items-center">
-        {/* Combined Probabilities Table */}
-        <div className="overflow-x-auto">
-          <table className="table-fixed text-sm border mt-1 text-center w-full max-w-2xl">
-            <thead>
-              <tr>
-                <th colSpan={3} className="text-center font-medium py-2">
-                  Probabilities
-                </th>
-              </tr>
-              <tr>
-                <th className="px-4 py-2 border font-medium capitalize w-1/3">Emotion</th>
-                <th className="px-4 py-2 border font-medium capitalize w-1/3">Gender</th>
-                <th className="px-4 py-2 border font-medium capitalize w-1/3">Race</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(() => {
-                const emotionKeys = Object.keys(face.emotion.probabilities);
-                const genderKeys = Object.keys(face.gender.probabilities);
-                const raceKeys = Object.keys(face.race.probabilities);
-                const maxLen = Math.max(
-                  emotionKeys.length,
-                  genderKeys.length,
-                  raceKeys.length
-                );
-
-                const getValue = (
-                  obj: Record<string, number>,
-                  key: string | undefined
-                ) => (key && obj[key] !== undefined ? `${obj[key].toFixed(2)}%` : "-");
-
-                return Array.from({ length: maxLen }).map((_, i) => {
-                  const emotionKey = emotionKeys[i];
-                  const genderKey = genderKeys[i];
-                  const raceKey = raceKeys[i];
-
-                  return (
-                    <tr key={i}>
-                      <td className="px-4 py-2 border capitalize italic text-center w-1/3">
-                        {emotionKey
-                          ? `${emotionKey}: ${getValue(face.emotion.probabilities, emotionKey)}`
-                          : "-"}
-                      </td>
-                      <td className="px-4 py-2 border capitalize italic text-center w-1/3">
-                        {genderKey
-                          ? `${genderKey}: ${getValue(face.gender.probabilities, genderKey)}`
-                          : "-"}
-                      </td>
-                      <td className="px-4 py-2 border capitalize italic text-center w-1/3">
-                        {raceKey
-                          ? `${raceKey}: ${getValue(face.race.probabilities, raceKey)}`
-                          : "-"}
-                      </td>
-                    </tr>
+        <div className="text-sm mt-2 space-y-4 flex flex-col items-center">
+          {/* Combined Probabilities Table */}
+          <div className="overflow-x-auto">
+            <table className="table-fixed text-sm border mt-1 text-center w-full max-w-2xl">
+              <thead>
+                <tr>
+                  <th colSpan={3} className="text-center font-medium py-2">
+                    Probabilities
+                  </th>
+                </tr>
+                <tr>
+                  <th className="px-4 py-2 border font-medium capitalize w-1/3">
+                    Emotion
+                  </th>
+                  <th className="px-4 py-2 border font-medium capitalize w-1/3">
+                    Gender
+                  </th>
+                  <th className="px-4 py-2 border font-medium capitalize w-1/3">
+                    Race
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {(() => {
+                  const emotionKeys = Object.keys(face.emotion.probabilities);
+                  const genderKeys = Object.keys(face.gender.probabilities);
+                  const raceKeys = Object.keys(face.race.probabilities);
+                  const maxLen = Math.max(
+                    emotionKeys.length,
+                    genderKeys.length,
+                    raceKeys.length
                   );
-                });
-              })()}
-            </tbody>
-          </table>
+
+                  const getValue = (
+                    obj: Record<string, number>,
+                    key: string | undefined
+                  ) =>
+                    key && obj[key] !== undefined
+                      ? `${obj[key].toFixed(2)}%`
+                      : "-";
+
+                  return Array.from({ length: maxLen }).map((_, i) => {
+                    const emotionKey = emotionKeys[i];
+                    const genderKey = genderKeys[i];
+                    const raceKey = raceKeys[i];
+
+                    return (
+                      <tr key={i}>
+                        <td className="px-4 py-2 border capitalize italic text-center w-1/3">
+                          {emotionKey
+                            ? `${emotionKey}: ${getValue(
+                                face.emotion.probabilities,
+                                emotionKey
+                              )}`
+                            : "-"}
+                        </td>
+                        <td className="px-4 py-2 border capitalize italic text-center w-1/3">
+                          {genderKey
+                            ? `${genderKey}: ${getValue(
+                                face.gender.probabilities,
+                                genderKey
+                              )}`
+                            : "-"}
+                        </td>
+                        <td className="px-4 py-2 border capitalize italic text-center w-1/3">
+                          {raceKey
+                            ? `${raceKey}: ${getValue(
+                                face.race.probabilities,
+                                raceKey
+                              )}`
+                            : "-"}
+                        </td>
+                      </tr>
+                    );
+                  });
+                })()}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
-
-
-
       </div>
     ) : (
       <p className="text-sm text-gray-400">Analyzing face...</p>
     );
-
 
   const handleModelChange = (value: string) => {
     setModel(value);
@@ -352,8 +341,6 @@ export default function App() {
         </div>
 
         <div className="bg-gray-50 border border-gray-200 shadow-md rounded-2xl p-8">
-        
-    
           {/* Tabs */}
           <div className="flex justify-center mb-6 space-x-6">
             {TABS.map(({ key, label }) => (
@@ -389,7 +376,9 @@ export default function App() {
                       </option>
                     ))}
                   </select>
-                  <p className="mt-1 text-xs text-gray-500">{modelDescription}</p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {modelDescription}
+                  </p>
                 </div>
 
                 <button
@@ -449,16 +438,18 @@ export default function App() {
               >
                 {loading ? "Processing..." : "Check Liveness"}
               </button>
-              { !loading && liveness &&
+              {!loading && liveness && (
                 <button
-                  onClick={()=>{setImageOne(null)}}
+                  onClick={() => {
+                    setImageOne(null);
+                  }}
                   disabled={loading}
                   className="mt-2 w-full inline-flex justify-center items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-xl transition disabled:opacity-60"
                 >
                   Clear
                 </button>
-              }
-            </> 
+              )}
+            </>
           )}
 
           {tab === "analyze" && (
@@ -472,15 +463,17 @@ export default function App() {
               >
                 {loading ? "Processing..." : "Analyze"}
               </button>
-              { !loading && analyze &&
+              {!loading && analyze && (
                 <button
-                  onClick={()=>{setImageOne(null)}}
+                  onClick={() => {
+                    setImageOne(null);
+                  }}
                   disabled={loading}
                   className="mt-2 w-full inline-flex justify-center items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-xl transition disabled:opacity-60"
                 >
                   Clear
                 </button>
-              }
+              )}
             </>
           )}
         </div>

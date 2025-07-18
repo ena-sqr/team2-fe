@@ -2,7 +2,7 @@ export type FetcherOptions = RequestInit;
 
 export async function fetcher<T = unknown>(
   url: string,
-  options: FetcherOptions = {},
+  options: FetcherOptions = {}
 ): Promise<T> {
   const defaultHeaders: HeadersInit = {
     "ngrok-skip-browser-warning": "true",
