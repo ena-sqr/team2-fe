@@ -41,9 +41,9 @@ interface LivenessResult {
 
 interface AnalyzeFace {
   age: number;
-  gender: { dominant: string };
-  race: { dominant: string };
-  emotion: { dominant: string };
+  gender: { dominant: string, probabilities: {} };
+  race: { dominant: string, probabilities: {} };
+  emotion: { dominant: string, probabilities: {} };
 }
 
 const TABS = [
@@ -240,25 +240,88 @@ export default function App() {
       <p className="text-sm text-gray-400">Checking liveness...</p>
     );
 
-  const renderAnalyze = (face: AnalyzeFace | null) =>
-    face ? (
-      <div className="text-sm mt-2 text-center">
-        <p>
-          <span className="font-medium">Age:</span> {face.age}
-        </p>
-        <p>
-          <span className="font-medium">Gender:</span> {face.gender.dominant}
-        </p>
-        <p>
-          <span className="font-medium">Race:</span> {face.race.dominant}
-        </p>
-        <p>
-          <span className="font-medium">Emotion:</span> {face.emotion.dominant}
-        </p>
+ const renderAnalyze = (face: AnalyzeFace | null) =>
+  face ? (
+    <div className="text-sm mt-2 text-center space-y-4">
+      {/* Combined Probabilities Table */}
+      <div className="overflow-x-auto">
+        <table className="table-auto mx-auto text-sm border mt-1">
+          <thead>
+            <tr>
+              <th className="px-4 py-2 border font-bold">Emotion:  {face.emotion.dominant}</th>
+              <th className="px-4 py-2 border font-bold">Gender: {face.gender.dominant}</th>
+              <th className="px-4 py-2 border font-bold">Race:  {face.race.dominant}</th>
+              <th className="px-4 py-2 border font-bold">Age:  {face.age}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr key={-1}>
+              <td className="px-4 py-2 border font-medium capitalize">Probabilities</td>
+              <td className="px-4 py-2 border font-medium capitalize">Probabilities</td>
+              <td className="px-4 py-2 border font-medium capitalize">Probabilities</td>
+              <td> - </td>
+            </tr>
+            {(() => {
+              // Extract the union of max rows across all
+              const emotionKeys = Object.keys(face.emotion.probabilities);
+              const genderKeys = Object.keys(face.gender.probabilities);
+              const raceKeys = Object.keys(face.race.probabilities);
+              const maxLen = Math.max(
+                emotionKeys.length,
+                genderKeys.length,
+                raceKeys.length
+              );
+
+              const getValue = (
+                obj: Record<string, number>,
+                key: string | undefined
+              ) => (key && obj[key] !== undefined ? `${obj[key].toFixed(2)}%` : "-");
+
+              return Array.from({ length: maxLen }).map((_, i) => {
+                const emotionKey = emotionKeys[i];
+                const genderKey = genderKeys[i];
+                const raceKey = raceKeys[i];
+
+                return (
+                  <tr key={i}>
+                    <td className="px-4 py-2 border capitalize italic">
+                      {emotionKey
+                        ? `${emotionKey}: ${getValue(
+                            face.emotion.probabilities,
+                            emotionKey
+                          )}`
+                        : "-"}
+                    </td>
+                    <td className="px-4 py-2 border capitalize italic">
+                      {genderKey
+                        ? `${genderKey}: ${getValue(
+                            face.gender.probabilities,
+                            genderKey
+                          )}`
+                        : "-"}
+                    </td>
+                    <td className="px-4 py-2 border capitalize italic">
+                      {raceKey
+                        ? `${raceKey}: ${getValue(
+                            face.race.probabilities,
+                            raceKey
+                          )}`
+                        : "-"}
+                    </td>
+                    <td >
+                       -
+                    </td>
+                  </tr>
+                );
+              });
+            })()}
+          </tbody>
+        </table>
       </div>
-    ) : (
-      <p className="text-sm text-gray-400">Analyzing face...</p>
-    );
+    </div>
+  ) : (
+    <p className="text-sm text-gray-400">Analyzing face...</p>
+  );
 
 
   const handleModelChange = (value: string) => {
