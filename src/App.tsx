@@ -10,13 +10,12 @@ import {
 } from "./utils/threshold";
 import { fetcher } from "./api/fetcher";
 import { mutate } from "./api/mutator";
-import { render } from "@testing-library/react";
 import logo from "./paraforesightLogo.png";
 
 const DEFAULT_MODEL = "VGG-Face";
 const DEFAULT_METRIC = "cosine";
 const DEFAULT_THRESHOLD = "0.68";
-const API_URL = "https://339f2afe9271.ngrok-free.app";
+const API_URL = "https://4c2adeb76e79.ngrok-free.app";
 
 const MODELS = [
   "VGG-Face",
