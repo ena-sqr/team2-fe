@@ -15,7 +15,7 @@ import logo from "./paraforesightLogo.png";
 const DEFAULT_MODEL = "VGG-Face";
 const DEFAULT_METRIC = "cosine";
 const DEFAULT_THRESHOLD = "0.68";
-const API_URL = "https://4c2adeb76e79.ngrok-free.app";
+const API_URL = "https://8131ef2085ef.ngrok-free.app";
 
 const MODELS = [
   "VGG-Face",
